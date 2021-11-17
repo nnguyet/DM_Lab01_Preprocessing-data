@@ -23,8 +23,11 @@ def main():
     sample = df.values.tolist()     # Lấy danh sách các dòng dữ liệu
     attr = {x:df[x].values.tolist() for x in title}     # Lấy danh sách dữ liệu của từng cột
 
-    column_has_missing(title, attr)
     #print(attr['Alley'][0])
+
+    # Test chức năng 1
+    #column_has_missing(title, attr)
+
 
 if __name__=="__main__":
     main()
