@@ -14,19 +14,30 @@ def column_has_missing(title, attr):
         for x in res:
             print(x)
 
+# 2. Đếm số dòng bị thiếu dữ liệu
+def row_has_missing(samples):
+    res = 0
+    for row in samples:
+        if "" in row:
+            res += 1
+    print(f'Co {res} cot bi thieu du lieu.')
+
 def main():
     file = 'house-prices.csv'       # Gán cứng để tiết kiệm thời gian test code, xóa sau khi hoàn thành
     #file = sys.argv[1]      # Tham số dòng lệnh thứ 2 là tên file csv
 
     df = pd.read_csv(file, keep_default_na=False)      # Đọc dữ liệu file csv
-    title = list(df.columns)    # Lấy tên các thuộc tính
-    sample = df.values.tolist()     # Lấy danh sách các dòng dữ liệu
-    attr = {x:df[x].values.tolist() for x in title}     # Lấy danh sách dữ liệu của từng cột
+    titles = list(df.columns)    # Lấy tên các thuộc tính
+    samples = df.values.tolist()     # Lấy danh sách các dòng dữ liệu
+    attrs = {x:df[x].values.tolist() for x in titles}     # Lấy danh sách dữ liệu của từng cột
 
     #print(attr['Alley'][0])
 
     # Test chức năng 1
-    #column_has_missing(title, attr)
+    #column_has_missing(titles, attrs)
+
+    # Test chức năng 2
+    row_has_missing(samples)
 
 
 if __name__=="__main__":
