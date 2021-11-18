@@ -3,12 +3,12 @@ from numpy import exp, sqrt
 import pandas as pd
 import re
 
-# Hàm thông báo sai cú pháp tham số dòng lệnh
+# Hàm thông báo tham số dòng lệnh bị sai
 def announce(parser, noti):
     print(noti)
     parser.print_help()
 
-# xét độ ưu tiên của các toán hạng
+# Xét độ ưu tiên của các toán hạng
 def precedence(op):
     if op == '+' or op == '-':
         return 1
@@ -16,14 +16,14 @@ def precedence(op):
         return 2
     return 0
 
-# tính giá trị biểu thức giữa 2 số
+# Tính giá trị biểu thức giữa 2 số
 def Cal(val1,val2,op):
     if op=='+': return val1+val2
     if op=='-': return val1-val2
     if op=='*': return val1*val2
     if op=='/': return val1/val2
 
-# tính giá trị biểu thức truyền vào ở dạng chuỗi 
+# Tính giá trị biểu thức truyền vào ở dạng chuỗi 
 # (nếu có phép tính không hợp lệ (chia cho 0) thì giá trị trả về là NaN)
 def evaluate(expression):
     operands=[]
@@ -81,17 +81,17 @@ def mode(attr):
 # Hàm tìm mean
 def mean(attr):
     clean_attr = list(filter(lambda x: x!='', attr))        # Loại bỏ các giá trị rỗng trong thuộc tính
-    return sum(clean_attr)/len(clean_attr)
+    return sum(clean_attr)/len(clean_attr)      # Tổng các phần tử / số phần tử
 
 # Hàm tìm median
 def median(attr):
     clean_attr = list(filter(lambda x: x!='', attr))        # Loại bỏ các giá trị rỗng trong thuộc tính
     clean_attr.sort()                   # Sắp xếp các giá trị của thuộc tính theo thứ tự tăng dần
-    n = len(clean_attr)                 # n là số lượng giá trị
+    n = len(clean_attr)                 # n là số lượng mẫu
     if n%2==1:
-        return clean_attr[n//2]
+        return clean_attr[n//2]         # n lẻ thì mode là phần tử chính giữa
     else:
-        return (clean_attr[n//2]+clean_attr[n//2-1])/2
+        return (clean_attr[n//2]+clean_attr[n//2-1])/2      # n chẵn thì mode là trung bình 2 phần tử chính giữa
 
 # Hàm tìm min
 def min_attr(attr):
@@ -103,22 +103,23 @@ def max_attr(attr):
     clean_attr = list(filter(lambda x: x!='', attr))        # Loại bỏ các giá trị rỗng trong thuộc tính
     return max(clean_attr)
 
-# Hàm tìm độ lệch chuẩn
+# Hàm tính độ lệch chuẩn
 def standard_deviation(attr):
     clean_attr = list(filter(lambda x: x!='', attr))        # Loại bỏ các giá trị rỗng trong thuộc tính
-    n = len(clean_attr)
-    aver = mean(clean_attr)
+    n = len(clean_attr)         # n là số lượng mẫu
+    aver = mean(clean_attr)     # aver là mean của mẫu
     s = 0
     for i in range(n):
         s += (clean_attr[i] - aver)/(n - 1)         # Tính phương sai
-    return sqrt(s)
+    return sqrt(s)      # Trả về căn bậc hai phương sai là độ lệch chuẩn
 
-# 1. Liệt kê cột bị thiếu
+# 1. Liệt kê cột bị thiếu dữ liệu
 def column_has_missing(titles, attrs):
-    res = []
+    res = []        # Lưu các cột bị thiếu dữ liệu
     for x in titles:
         if "" in attrs[x]:
             res.append(x)
+
     if (len(res)==0):
         print('Khong co cot nao bi thieu du lieu.')
     else:
@@ -136,23 +137,24 @@ def row_has_missing(samples):
 
 # 3. Điền giá trị bị thiếu
 def fill_missing(method, attr):
-    fix_if_float(attr)
+    fix_if_float(attr)      # Chuyển số dạng string về kiểu float
     if method == 'mean':
         value = mean(attr)
     elif method == 'median':
         value = median(attr)
     elif method == 'mode':
         value = mode(attr)
+
     for i in range(len(attr)):
         if attr[i] == '':
             attr[i] = value
     return attr
 
-# 4. Tìm các dòng thiếu dữ liệu với ngưỡng tỉ lệ ratio
+# 4. Tìm các dòng có số lượng thuộc tính bị thiếu > limit
 def row_ratio_miss(limit, row):
     res = []        # Lưu index các dòng cần xóa
     for i in range(len(row)):
-        cnt = 0
+        cnt = 0     # Lưu số thuộc tính bị thiếu của dòng i
         for j in range(len(row[i])):
             if row[i][j] == '':
                 cnt += 1
@@ -161,11 +163,11 @@ def row_ratio_miss(limit, row):
                     break
     return res
 
-# 5. Tìm các cột thiếu dữ liệu với ngưỡng tỉ lệ ratio
+# 5. Tìm các cột có số dữ liệu bị thiếu > limit
 def col_ratio_miss(limit, col):
     res = []        # Lưu tên các thuộc tính cần xóa
     for attr in col:
-        cnt = 0
+        cnt = 0     # Lưu số dữ liệu bị thiếu của thuộc tính attr
         for i in range(len(col[attr])):
             if col[attr][i] == '':
                 cnt += 1
@@ -188,48 +190,46 @@ def duplicate_rows(rows):
 # 7. Chuẩn hóa thuộc tính
 # Chuẩn hóa min-max
 def min_max_normalize(attr, new_min, new_max):
-    fix_if_float(attr)
+    fix_if_float(attr)          # Chuyển số dạng string về kiểu float
     old_min = min_attr(attr)
     old_max = max_attr(attr)
     for i in range(len(attr)):
         if attr[i]!='':         # Dữ liệu bị mất thì không chuẩn hóa được
-            attr[i] = (attr[i]-old_min)/(old_max-old_min)*(new_max-new_min) + new_min
+            attr[i] = (attr[i] - old_min)/(old_max - old_min)*(new_max - new_min) + new_min
     return attr
 
 # Chuẩn hóa z-score
 def zscore_normalize(attr):
-    fix_if_float(attr)
+    fix_if_float(attr)          # Chuyển số dạng string về kiểu float
     mu = mean(attr)
     sigma = standard_deviation(attr)
     for i in range(len(attr)):
-        if attr[i]!='':
+        if attr[i]!='':         # Dữ liệu bị mất thì không chuẩn hóa được
             attr[i] = (attr[i] - mu)/sigma
     return attr
 
-# 8.tính thuộc tính mới    
+# 8.Tính thuộc tính mới    
 def newAttr(df, prototype, newAttr):
-    title=list(df.columns) # danh sách thuộc tính cũ
-    prototypeAttr=re.split('\+|-|\*|/',prototype.strip()) # lấy các thuộc tính được đề cập trong biểu thức
-    newCol=[] # mảng lưu giá trị thuộc tính mới
+    title = list(df.columns) # Danh sách thuộc tính cũ
+    prototypeAttr = re.split('\+|-|\*|/', prototype.strip()) # Lấy các thuộc tính được đề cập trong biểu thức
+    newCol = [] # Mảng lưu giá trị thuộc tính mới
     for i in range(len(df[title[0]])):
-        flag=True
-        toCal=prototype
+        flag = True
+        toCal = prototype
         for p in prototypeAttr: # duyệt các thuộc tính trong biểu thức
-            if df[p][i]=='': # nếu tại dòng i thuộc tính bị thiếu giá thì dừng vòng lặp
-                flag=False
+            if df[p][i] == '': # nếu tại dòng i thuộc tính bị thiếu giá thì dừng vòng lặp
+                flag = False
                 break
-            toCal=toCal.replace(p,str(df[p][i])) 
+            toCal = toCal.replace(p, str(df[p][i])) 
             """nếu tại dòng i không có thuộc tính thiếu giá trị thì thay lần lượt các tên
             thuộc tính thành giá trị của thuộc tính đó tại i"""
         newCol.append(evaluate(toCal)) if flag else newCol.append('') # tính giá trị nếu có và thêm vào dòng i của thuộc tính mới
-    df[newAttr]=newCol # thêm thuộc tính mới vào dataframe
+    df[newAttr] = newCol # thêm thuộc tính mới vào dataframe
     return df
 
 def main(argv):
-    file = 'house-prices.csv'       # Gán cứng để tiết kiệm thời gian test code, xóa sau khi hoàn thành
-
     # Phân tích cú pháp tham số dòng lệnh
-    parser = argparse.ArgumentParser(epilog="* Read 'README.pdf' for more help.")
+    parser = argparse.ArgumentParser(epilog="* Read 'README.pdf' for more information.")
     parser.add_argument('file', help='csv file name')
     parser.add_argument('func_code', type=int, metavar='N', choices=[1, 2, 3, 4, 5, 6, 7, 8], help='number of function')
     parser.add_argument('-m', nargs='*', choices=['mean', 'median', 'mode', 'minmax', 'zscore'], default=argparse.SUPPRESS, help='method (need when use function 3 or 7)')
@@ -241,20 +241,22 @@ def main(argv):
 
     args = vars(parser.parse_args(argv))
 
-    #df = pd.read_csv(args['file'], keep_default_na=False)      # Đọc dữ liệu file csv
-    df = pd.read_csv(file, keep_default_na=False)
+    df = pd.read_csv(args['file'], keep_default_na=False)      # Đọc dữ liệu file csv
     titles = list(df.columns)    # Lấy tên các thuộc tính
 
-    # fill_missing(argv,df,titles)
+    # Chức năng 1: Liệt kê các cột bị thiếu dữ liệu
     if args['func_code'] == 1:
         attrs = {x:df[x].values.tolist() for x in titles}     # Lấy danh sách dữ liệu của từng cột
         column_has_missing(titles, attrs)
 
+    # Chức năng 2: Đếm số dòng bị thiếu dữ liệu
     elif args['func_code'] == 2:
         samples = df.values.tolist()     # Lấy danh sách các dòng dữ liệu
         row_has_missing(samples)
 
+    # Chức năng 3: Điền giá trị bị thiếu bằng phương pháp mean, median, mode
     elif args['func_code'] == 3:
+        # Kiểm tra các tham số
         if 'm' not in args or 'attr' not in args or 'o' not in args:
             announce(parser, 'Wrong syntax!')
             return
@@ -278,37 +280,48 @@ def main(argv):
             return
         df.to_csv(args['o'], index=False)
 
+    # Chức năng 4: Xóa các dòng bị thiếu dữ liệu với ngưỡng tỉ lệ ratio cho trước
     elif args['func_code'] == 4:
+        # Kiểm tra các tham số
         if 'ratio' not in args or 'o' not in args:
             announce(parser, 'Wrong syntax!')
             return
+
         samples = df.values.tolist()     # Lấy danh sách các dòng dữ liệu
-        limit = args['ratio']/100 * len(titles)
-        rows = row_ratio_miss(limit, samples)
+        limit = args['ratio']/100 * len(titles)     # Chuyển tỉ lệ ratio thành số giới hạn cụ thể
+        rows = row_ratio_miss(limit, samples)       # Tìm các dòng cần xóa
         df = df.drop(rows)
         df.to_csv(args['o'], index=False)
 
+    # Chức năng 5: Xóa các cột bị thiếu dữ liệu với ngưỡng tỉ lệ ratio cho trước
     elif args['func_code'] == 5:
+        # Kiểm tra các tham số
         if 'ratio' not in args or 'o' not in args:
             announce(parser, 'Wrong syntax!')
             return
-        attrs = {x:df[x].values.tolist() for x in titles}     # Lấy danh sách dữ liệu của từng cột
-        limit = args['ratio']/100 * len(df.index)
-        cols = col_ratio_miss(limit, attrs)
+
+        attrs = {x:df[x].values.tolist() for x in titles}       # Lấy danh sách dữ liệu của từng cột
+        limit = args['ratio']/100 * len(df.index)               # Chuyển tỉ lệ ratio thành số giới hạn cụ thể
+        cols = col_ratio_miss(limit, attrs)         # Tìm các cột cần xóa
         for attr in cols:
             df = df.drop(columns=attr)
         df.to_csv(args['o'], index=False)
 
+    # Chức năng 6: Xóa các mẫu bị trùng lặp
     elif args['func_code'] == 6:
+        # Kiểm tra tham số
         if 'o' not in args:
             announce(parser, 'Wrong syntax!')
             return
-        samples = df.values.tolist()     # Lấy danh sách các dòng dữ liệu
-        rows = duplicate_rows(samples)
+
+        samples = df.values.tolist()        # Lấy danh sách các dòng dữ liệu
+        rows = duplicate_rows(samples)      # Tìm index của các dòng bị trùng
         df = df.drop(rows)
         df.to_csv(args['o'], index=False)
 
+    # Chức năng 7: Chuẩn hóa một thuộc tính numeric bằng phương pháp min-max và Z-score
     elif args['func_code'] == 7:
+        # Kiểm tra các tham số
         if 'm' not in args or 'attr' not in args or 'o' not in args:
             announce(parser, 'Wrong syntax!')
             return
@@ -317,7 +330,8 @@ def main(argv):
             return
 
         attrs = {x:df[x].values.tolist() for x in titles}     # Lấy danh sách dữ liệu của từng cột
-        if len(args['m']) == 1:
+        
+        if len(args['m']) == 1:                 # Chỉ truyền 1 method cho tất cả attribute
             if args['m'][0] == 'minmax':
                 for attr in args['attr']:
                     df[attr] = min_max_normalize(attrs[attr], 0, 1)
@@ -325,9 +339,9 @@ def main(argv):
                 for attr in args['attr']:
                     df[attr] = zscore_normalize(attrs[attr])
 
-        elif len(args['m']) == len(args['attr']):
+        elif len(args['m']) == len(args['attr']):       # Mỗi attribute có 1 method riêng
             for attr in args['attr']:
-                if args['m'][args['attr'].index(attr)] == 'minmax':
+                if args['m'][args['attr'].index(attr)] == 'minmax':     # Kiểm tra method tương ứng attr là gì
                     df[attr] = min_max_normalize(attrs[attr], 0, 1)
                 else:
                     df[attr] = zscore_normalize(attrs[attr])
@@ -336,20 +350,15 @@ def main(argv):
             return
         df.to_csv(args['o'])
 
+    # Chức năng 8: Tính giá trị biểu thức thuộc tính
     elif args['func_code'] == 8:
-        """chức năng 8: <tên ct> <tên file csv> <mã chức năng> -exp <biểu thức viết liền không khoảng trắng> -nc <tên thuộc tính mới> -con[console] -o <tên file mới>
-        note: tên thuộc tính phải chính xác (phân biệt chữ cái hoa - thường)
-        vd1 in ra file mới: dm.py house-prices.csv 8 -exp 1stFlrSF+2ndFlrSF -nc newCol -o newfile.csv
-        vd2 in ra console:  dm.py house-prices.csv 8 -exp 1stFlrSF+2ndFlrSF -nc newCol -con"""
+        # Kiểm tra các tham số
         if 'exp' not in args or 'nc' not in args or 'o' not in args:
             announce(parser, 'Wrong syntax!')
             return
-        newAttr(df, args['exp'], args['nc'])
+        
+        newAttr(df, args['exp'], args['nc'])        # Tính thuộc tính mới
         df.to_csv(args['o'], index=False)
-        # if '-o' in sys.argv:
-        #     df.to_csv(sys.argv[sys.argv.index('-o')+1])
-        # elif '-con' in sys.argv:
-        #     print(df.head())
     else:
         announce(parser, 'Wrong syntax!')
 
