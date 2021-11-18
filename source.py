@@ -137,13 +137,14 @@ def row_has_missing(samples):
 
 # 3. Điền giá trị bị thiếu
 def fill_missing(method, attr):
-    fix_if_float(attr)      # Chuyển số dạng string về kiểu float
-    if method == 'mean':
-        value = mean(attr)
-    elif method == 'median':
-        value = median(attr)
-    elif method == 'mode':
+    if method == 'mode':
         value = mode(attr)
+    else:
+        fix_if_float(attr)      # Chuyển số dạng string về kiểu float
+        if method == 'mean':
+            value = mean(attr)
+        elif method == 'median':
+            value = median(attr)
 
     for i in range(len(attr)):
         if attr[i] == '':
