@@ -1,13 +1,12 @@
 import sys, argparse
-from numpy import exp
+from numpy import exp, sqrt
 import pandas as pd
 import re
 
 # Hàm thông báo sai cú pháp tham số dòng lệnh
-def announce(parser):
-    print('Wrong syntax!')
+def announce(parser, noti):
+    print(noti)
     parser.print_help()
-    print("* Read 'README.pdf' for more help.")
 
 # xét độ ưu tiên của các toán hạng
 def precedence(op):
@@ -65,6 +64,15 @@ def evaluate(expression):
         operands.append(Cal(val1,val2,op))
     return operands[-1]
 
+# Vì pandas đọc kiểu float là 1 string nên hàm này để chuyển định dạng str về float
+def fix_if_float(arr):
+    for i in range(len(arr)):
+        if arr[i] == '':
+            continue
+        if type(arr[i]) == int:
+            continue
+        arr[i] = float(arr[i])
+
 # Hàm tìm mode
 def mode(attr):
     clean_attr = list(filter(lambda x: x!='', attr))        # Loại bỏ các giá trị rỗng trong thuộc tính
@@ -84,6 +92,26 @@ def median(attr):
         return clean_attr[n//2]
     else:
         return (clean_attr[n//2]+clean_attr[n//2-1])/2
+
+# Hàm tìm min
+def min_attr(attr):
+    clean_attr = list(filter(lambda x: x!='', attr))        # Loại bỏ các giá trị rỗng trong thuộc tính
+    return min(clean_attr)
+
+# Hàm tìm max
+def max_attr(attr):
+    clean_attr = list(filter(lambda x: x!='', attr))        # Loại bỏ các giá trị rỗng trong thuộc tính
+    return max(clean_attr)
+
+# Hàm tìm độ lệch chuẩn
+def standard_deviation(attr):
+    clean_attr = list(filter(lambda x: x!='', attr))        # Loại bỏ các giá trị rỗng trong thuộc tính
+    n = len(clean_attr)
+    aver = mean(clean_attr)
+    s = 0
+    for i in range(n):
+        s += (clean_attr[i] - aver)/(n - 1)         # Tính phương sai
+    return sqrt(s)
 
 # 1. Liệt kê cột bị thiếu
 def column_has_missing(titles, attrs):
@@ -108,6 +136,7 @@ def row_has_missing(samples):
 
 # 3. Điền giá trị bị thiếu
 def fill_missing(method, attr):
+    fix_if_float(attr)
     if method == 'mean':
         value = mean(attr)
     elif method == 'median':
@@ -145,6 +174,28 @@ def col_ratio_miss(limit, col):
                     break
     return res
 
+
+# 7. Chuẩn hóa thuộc tính
+# Chuẩn hóa min-max
+def min_max_normalize(attr, new_min, new_max):
+    fix_if_float(attr)
+    old_min = min_attr(attr)
+    old_max = max_attr(attr)
+    for i in range(len(attr)):
+        if attr[i]!='':         # Dữ liệu bị mất thì không chuẩn hóa được
+            attr[i] = (attr[i]-old_min)/(old_max-old_min)*(new_max-new_min) + new_min
+    return attr
+
+# Chuẩn hóa z-score
+def zscore_normalize(attr):
+    fix_if_float(attr)
+    mu = mean(attr)
+    sigma = standard_deviation(attr)
+    for i in range(len(attr)):
+        if attr[i]!='':
+            attr[i] = (attr[i] - mu)/sigma
+    return attr
+
 # 8.tính thuộc tính mới    
 def newAttr(df, prototype, newAttr):
     title=list(df.columns) # danh sách thuộc tính cũ
@@ -168,7 +219,7 @@ def main(argv):
     file = 'house-prices.csv'       # Gán cứng để tiết kiệm thời gian test code, xóa sau khi hoàn thành
 
     # Phân tích cú pháp tham số dòng lệnh
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(epilog="* Read 'README.pdf' for more help.")
     parser.add_argument('file', help='csv file name')
     parser.add_argument('func_code', type=int, metavar='N', choices=[1, 2, 3, 4, 5, 6, 7, 8], help='number of function')
     parser.add_argument('-m', nargs='*', choices=['mean', 'median', 'mode', 'minmax', 'zscore'], default=argparse.SUPPRESS, help='method (need when use function 3 or 7)')
@@ -196,7 +247,10 @@ def main(argv):
 
     elif args['func_code'] == 3:
         if 'm' not in args or 'attr' not in args or 'o' not in args:
-            announce(parser)
+            announce(parser, 'Wrong syntax!')
+            return
+        if 'minmax' in args['m'] or 'zscore' in args['m']:
+            announce(parser, 'Wrong method!')
             return
 
         attrs = {x:df[x].values.tolist() for x in titles}     # Lấy danh sách dữ liệu của từng cột
@@ -211,13 +265,13 @@ def main(argv):
                 fill_col = fill_missing(args['m'][args['attr'].index(attr)], attrs[attr])
                 df[attr] = fill_col
         else:
-            announce(parser)
+            announce(parser, 'Miss arguments!')
             return
         df.to_csv(args['o'], index=False)
 
     elif args['func_code'] == 4:
         if 'ratio' not in args or 'o' not in args:
-            announce(parser)
+            announce(parser, 'Wrong syntax!')
             return
         samples = df.values.tolist()     # Lấy danh sách các dòng dữ liệu
         limit = args['ratio']/100 * len(titles)
@@ -227,7 +281,7 @@ def main(argv):
 
     elif args['func_code'] == 5:
         if 'ratio' not in args or 'o' not in args:
-            announce(parser)
+            announce(parser, 'Wrong syntax!')
             return
         attrs = {x:df[x].values.tolist() for x in titles}     # Lấy danh sách dữ liệu của từng cột
         limit = args['ratio']/100 * len(df.index)
@@ -240,7 +294,32 @@ def main(argv):
         print('func6')
 
     elif args['func_code'] == 7:
-        print('func7')
+        if 'm' not in args or 'attr' not in args or 'o' not in args:
+            announce(parser, 'Wrong syntax!')
+            return
+        if 'mean' in args['m'] or 'median' in args['m'] or 'mode' in args['m']:
+            announce(parser, 'Wrong method!')
+            return
+
+        attrs = {x:df[x].values.tolist() for x in titles}     # Lấy danh sách dữ liệu của từng cột
+        if len(args['m']) == 1:
+            if args['m'][0] == 'minmax':
+                for attr in args['attr']:
+                    df[attr] = min_max_normalize(attrs[attr], 0, 1)
+            else:
+                for attr in args['attr']:
+                    df[attr] = zscore_normalize(attrs[attr])
+
+        elif len(args['m']) == len(args['attr']):
+            for attr in args['attr']:
+                if args['m'][args['attr'].index(attr)] == 'minmax':
+                    df[attr] = min_max_normalize(attrs[attr], 0, 1)
+                else:
+                    df[attr] = zscore_normalize(attrs[attr])
+        else:
+            announce(parser, 'Miss arguments!')
+            return
+        df.to_csv(args['o'])
 
     elif args['func_code'] == 8:
         """chức năng 8: <tên ct> <tên file csv> <mã chức năng> -exp <biểu thức viết liền không khoảng trắng> -nc <tên thuộc tính mới> -con[console] -o <tên file mới>
@@ -248,7 +327,7 @@ def main(argv):
     vd1 in ra file mới: dm.py house-prices.csv 8 -exp 1stFlrSF+2ndFlrSF -nc newCol -o newfile.csv
     vd2 in ra console:  dm.py house-prices.csv 8 -exp 1stFlrSF+2ndFlrSF -nc newCol -con"""
         if 'exp' not in args or 'nc' not in args or 'o' not in args:
-            announce(parser)
+            announce(parser, 'Wrong syntax!')
             return
         newAttr(df, args['exp'], args['nc'])
         df.to_csv(args['o'])
