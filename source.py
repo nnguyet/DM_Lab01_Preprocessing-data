@@ -349,7 +349,7 @@ def main(argv):
         else:
             announce(parser, 'Miss arguments!')
             return
-        df.to_csv(args['o'])
+        df.to_csv(args['o'], index=False)
 
     # Chức năng 8: Tính giá trị biểu thức thuộc tính
     elif args['func_code'] == 8:
