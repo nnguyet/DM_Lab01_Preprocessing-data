@@ -110,7 +110,7 @@ def standard_deviation(attr):
     aver = mean(clean_attr)     # aver là mean của mẫu
     s = 0
     for i in range(n):
-        s += (clean_attr[i] - aver)/(n - 1)         # Tính phương sai
+        s += ((clean_attr[i] - aver)**2)/(n - 1)         # Tính phương sai
     return sqrt(s)      # Trả về căn bậc hai phương sai là độ lệch chuẩn
 
 # 1. Liệt kê cột bị thiếu dữ liệu
