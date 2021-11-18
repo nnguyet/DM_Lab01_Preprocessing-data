@@ -156,7 +156,7 @@ def row_ratio_miss(limit, row):
         for j in range(len(row[i])):
             if row[i][j] == '':
                 cnt += 1
-                if cnt >= limit:
+                if cnt > limit:
                     res.append(i)
                     break
     return res
@@ -169,7 +169,7 @@ def col_ratio_miss(limit, col):
         for i in range(len(col[attr])):
             if col[attr][i] == '':
                 cnt += 1
-                if cnt >= limit:
+                if cnt > limit:
                     res.append(attr)
                     break
     return res
@@ -338,9 +338,9 @@ def main(argv):
 
     elif args['func_code'] == 8:
         """chức năng 8: <tên ct> <tên file csv> <mã chức năng> -exp <biểu thức viết liền không khoảng trắng> -nc <tên thuộc tính mới> -con[console] -o <tên file mới>
-    note: tên thuộc tính phải chính xác (phân biệt chữ cái hoa - thường)
-    vd1 in ra file mới: dm.py house-prices.csv 8 -exp 1stFlrSF+2ndFlrSF -nc newCol -o newfile.csv
-    vd2 in ra console:  dm.py house-prices.csv 8 -exp 1stFlrSF+2ndFlrSF -nc newCol -con"""
+        note: tên thuộc tính phải chính xác (phân biệt chữ cái hoa - thường)
+        vd1 in ra file mới: dm.py house-prices.csv 8 -exp 1stFlrSF+2ndFlrSF -nc newCol -o newfile.csv
+        vd2 in ra console:  dm.py house-prices.csv 8 -exp 1stFlrSF+2ndFlrSF -nc newCol -con"""
         if 'exp' not in args or 'nc' not in args or 'o' not in args:
             announce(parser, 'Wrong syntax!')
             return
