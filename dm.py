@@ -85,25 +85,6 @@ def median(attr):
     else:
         return (clean_attr[n//2]+clean_attr[n//2-1])/2
 
-# 8.tính thuộc tính mới    
-def newAttr(df, prototype, newAttr):
-    title=list(df.columns) # danh sách thuộc tính cũ
-    prototypeAttr=re.split('\+|-|\*|/',prototype.strip()) # lấy các thuộc tính được đề cập trong biểu thức
-    newCol=[] # mảng lưu giá trị thuộc tính mới
-    for i in range(len(df[title[0]])):
-        flag=True
-        toCal=prototype
-        for p in prototypeAttr: # duyệt các thuộc tính trong biểu thức
-            if df[p][i]=='': # nếu tại dòng i thuộc tính bị thiếu giá thì dừng vòng lặp
-                flag=False
-                break
-            toCal=toCal.replace(p,str(df[p][i])) 
-            """nếu tại dòng i không có thuộc tính thiếu giá trị thì thay lần lượt các tên
-            thuộc tính thành giá trị của thuộc tính đó tại i"""
-        newCol.append(evaluate(toCal)) if flag else newCol.append('') # tính giá trị nếu có và thêm vào dòng i của thuộc tính mới
-    df[newAttr]=newCol # thêm thuộc tính mới vào dataframe
-    return df
-    
 # 1. Liệt kê cột bị thiếu
 def column_has_missing(titles, attrs):
     res = []
@@ -138,6 +119,51 @@ def fill_missing(method, attr):
             attr[i] = value
     return attr
 
+# 4. Tìm các dòng thiếu dữ liệu với ngưỡng tỉ lệ ratio
+def row_ratio_miss(limit, row):
+    res = []        # Lưu index các dòng cần xóa
+    for i in range(len(row)):
+        cnt = 0
+        for j in range(len(row[i])):
+            if row[i][j] == '':
+                cnt += 1
+                if cnt >= limit:
+                    res.append(i)
+                    break
+    return res
+
+# 5. Tìm các cột thiếu dữ liệu với ngưỡng tỉ lệ ratio
+def col_ratio_miss(limit, col):
+    res = []        # Lưu tên các thuộc tính cần xóa
+    for attr in col:
+        cnt = 0
+        for i in range(len(col[attr])):
+            if col[attr][i] == '':
+                cnt += 1
+                if cnt >= limit:
+                    res.append(attr)
+                    break
+    return res
+
+# 8.tính thuộc tính mới    
+def newAttr(df, prototype, newAttr):
+    title=list(df.columns) # danh sách thuộc tính cũ
+    prototypeAttr=re.split('\+|-|\*|/',prototype.strip()) # lấy các thuộc tính được đề cập trong biểu thức
+    newCol=[] # mảng lưu giá trị thuộc tính mới
+    for i in range(len(df[title[0]])):
+        flag=True
+        toCal=prototype
+        for p in prototypeAttr: # duyệt các thuộc tính trong biểu thức
+            if df[p][i]=='': # nếu tại dòng i thuộc tính bị thiếu giá thì dừng vòng lặp
+                flag=False
+                break
+            toCal=toCal.replace(p,str(df[p][i])) 
+            """nếu tại dòng i không có thuộc tính thiếu giá trị thì thay lần lượt các tên
+            thuộc tính thành giá trị của thuộc tính đó tại i"""
+        newCol.append(evaluate(toCal)) if flag else newCol.append('') # tính giá trị nếu có và thêm vào dòng i của thuộc tính mới
+    df[newAttr]=newCol # thêm thuộc tính mới vào dataframe
+    return df
+
 def main(argv):
     file = 'house-prices.csv'       # Gán cứng để tiết kiệm thời gian test code, xóa sau khi hoàn thành
 
@@ -145,12 +171,12 @@ def main(argv):
     parser = argparse.ArgumentParser()
     parser.add_argument('file', help='csv file name')
     parser.add_argument('func_code', type=int, metavar='N', choices=[1, 2, 3, 4, 5, 6, 7, 8], help='number of function')
-    parser.add_argument('-m', nargs='*', default=argparse.SUPPRESS, help='method (need when use function 3 or 7)')
+    parser.add_argument('-m', nargs='*', choices=['mean', 'median', 'mode', 'minmax', 'zscore'], default=argparse.SUPPRESS, help='method (need when use function 3 or 7)')
     parser.add_argument('-attr', nargs='*', default=argparse.SUPPRESS, help='attributes (need when use function 3 or 7)')
-    parser.add_argument('-ratio', default=argparse.SUPPRESS, help='ratio (need when use function 4 or 5)')
+    parser.add_argument('-ratio', type=float, default=argparse.SUPPRESS, help='ratio (need when use function 4 or 5)')
     parser.add_argument('-exp', default=argparse.SUPPRESS, help='expression (need when use function 8)')
     parser.add_argument('-nc', default=argparse.SUPPRESS, help='new column name (need when use function 8)')
-    parser.add_argument('-o', default=argparse.SUPPRESS, help='output file name (need when use function 3 -> 8')
+    parser.add_argument('-o', default=argparse.SUPPRESS, help='output file name (need when use function 3 -> 8)')
 
     args = vars(parser.parse_args(argv))
 
@@ -187,13 +213,28 @@ def main(argv):
         else:
             announce(parser)
             return
-        df.to_csv(args['o'])
+        df.to_csv(args['o'], index=False)
 
     elif args['func_code'] == 4:
-        print('func4')
+        if 'ratio' not in args or 'o' not in args:
+            announce(parser)
+            return
+        samples = df.values.tolist()     # Lấy danh sách các dòng dữ liệu
+        limit = args['ratio']/100 * len(titles)
+        rows = row_ratio_miss(limit, samples)
+        df = df.drop(rows)
+        df.to_csv(args['o'], index=False)
 
     elif args['func_code'] == 5:
-        print('func5')
+        if 'ratio' not in args or 'o' not in args:
+            announce(parser)
+            return
+        attrs = {x:df[x].values.tolist() for x in titles}     # Lấy danh sách dữ liệu của từng cột
+        limit = args['ratio']/100 * len(df.index)
+        cols = col_ratio_miss(limit, attrs)
+        for attr in cols:
+            df = df.drop(columns=attr)
+        df.to_csv(args['o'], index=False)
 
     elif args['func_code'] == 6:
         print('func6')
