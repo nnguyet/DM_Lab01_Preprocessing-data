@@ -174,6 +174,16 @@ def col_ratio_miss(limit, col):
                     break
     return res
 
+# 6. Tìm index của các dòng bị trùng
+def duplicate_rows(rows):
+    res = []        # Lưu index các dòng bị trùng
+    for i in range(len(rows)):
+        if i in res:
+            continue
+        for j in range(i+1, len(rows)):
+            if rows[i][0] == rows[j][0]:           # Yêu cầu cột đầu tiên phải là id (mã phân biệt giữa các dòng)
+                res.append(j)
+    return res
 
 # 7. Chuẩn hóa thuộc tính
 # Chuẩn hóa min-max
@@ -231,7 +241,6 @@ def main(argv):
 
     args = vars(parser.parse_args(argv))
 
-    #file = sys.argv[0]      # Lấy tên file csv
     #df = pd.read_csv(args['file'], keep_default_na=False)      # Đọc dữ liệu file csv
     df = pd.read_csv(file, keep_default_na=False)
     titles = list(df.columns)    # Lấy tên các thuộc tính
@@ -291,7 +300,13 @@ def main(argv):
         df.to_csv(args['o'], index=False)
 
     elif args['func_code'] == 6:
-        print('func6')
+        if 'o' not in args:
+            announce(parser, 'Wrong syntax!')
+            return
+        samples = df.values.tolist()     # Lấy danh sách các dòng dữ liệu
+        rows = duplicate_rows(samples)
+        df = df.drop(rows)
+        df.to_csv(args['o'], index=False)
 
     elif args['func_code'] == 7:
         if 'm' not in args or 'attr' not in args or 'o' not in args:
@@ -330,13 +345,13 @@ def main(argv):
             announce(parser, 'Wrong syntax!')
             return
         newAttr(df, args['exp'], args['nc'])
-        df.to_csv(args['o'])
+        df.to_csv(args['o'], index=False)
         # if '-o' in sys.argv:
         #     df.to_csv(sys.argv[sys.argv.index('-o')+1])
         # elif '-con' in sys.argv:
         #     print(df.head())
     else:
-        announce(parser)
-    
+        announce(parser, 'Wrong syntax!')
+
 if __name__=="__main__":
     main(sys.argv[1:])
